@@ -22,7 +22,7 @@ class SatelliteState:
     command_frequency: int
     communication_anomaly: bool
 
-    # Mission / security state
+    # Mission / security
     mission_mode: str
     security_state: str
 
@@ -31,9 +31,7 @@ class SatelliteState:
 
 
 def create_normal_state():
-    """
-    Creates the baseline healthy spacecraft state.
-    """
+    """Return a healthy baseline spacecraft state."""
 
     return SatelliteState(
         satellite_id="SAT-01",
@@ -61,5 +59,4 @@ if __name__ == "__main__":
     state = create_normal_state()
 
     print("=== Orbital Sus Satellite Simulator ===")
-    print("Normal satellite state:")
     print(state.to_dict())

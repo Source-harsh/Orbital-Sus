@@ -1,6 +1,6 @@
 class ThreatStateMachine:
 
-    STATES = [
+    STATES = {
         "NOMINAL",
         "ANOMALY_DETECTED",
         "UNDER_INVESTIGATION",
@@ -10,7 +10,7 @@ class ThreatStateMachine:
         "SAFE_MODE",
         "TRUSTED_MONITORING",
         "RECOVERY"
-    ]
+    }
 
     def __init__(self):
 
@@ -33,43 +33,34 @@ class ThreatStateMachine:
 
         self.state = new_state
 
-        self.history.append(
-            {
-                "state": new_state,
-                "event": event
-            }
-        )
-
-        return self.state
+        self.history.append({
+            "state": new_state,
+            "event": event
+        })
 
     def process_detection(self, correlation_result):
 
-        classification = correlation_result["classification"]
-        threat_level = correlation_result["threat_level"]
+        classification = correlation_result[
+            "classification"
+        ]
 
-        # --------------------------------
-        # Step 1: anomaly detected
-        # --------------------------------
+        threat_level = correlation_result[
+            "threat_level"
+        ]
 
-        if classification != "NORMAL":
+        if classification == "NORMAL":
 
-            self.transition(
-                "ANOMALY_DETECTED",
-                "ABNORMAL_BEHAVIOUR_DETECTED"
-            )
+            return self.state
 
-        # --------------------------------
-        # Step 2: investigation
-        # --------------------------------
+        self.transition(
+            "ANOMALY_DETECTED",
+            "ABNORMAL_BEHAVIOUR_DETECTED"
+        )
 
         self.transition(
             "UNDER_INVESTIGATION",
             "CORRELATING_TELEMETRY"
         )
-
-        # --------------------------------
-        # Step 3: cyber suspicion
-        # --------------------------------
 
         if classification == "CYBER_ANOMALY":
 
@@ -83,7 +74,10 @@ class ThreatStateMachine:
                 f"THREAT_LEVEL_{threat_level}"
             )
 
-            if threat_level in ["HIGH", "CRITICAL"]:
+            if threat_level in {
+                "HIGH",
+                "CRITICAL"
+            }:
 
                 self.transition(
                     "CONTAINMENT",
@@ -92,7 +86,6 @@ class ThreatStateMachine:
 
         else:
 
-            # Hardware/environmental anomaly
             self.transition(
                 "RECOVERY",
                 f"NON_CYBER_EVENT_{classification}"
@@ -128,28 +121,4 @@ class ThreatStateMachine:
 
     def get_history(self):
 
-        return self.history
-
-
-if __name__ == "__main__":
-
-    machine = ThreatStateMachine()
-
-    correlation_result = {
-        "classification": "CYBER_ANOMALY",
-        "threat_level": "CRITICAL"
-    }
-
-    machine.process_detection(correlation_result)
-
-    machine.enter_safe_mode()
-    machine.start_monitoring()
-    machine.recover()
-
-    print("Final state:", machine.state)
-
-    print("\nState history:")
-
-    for event in machine.get_history():
-
-        print(event)
+        return list(self.history)

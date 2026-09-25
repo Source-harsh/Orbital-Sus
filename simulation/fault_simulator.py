@@ -1,4 +1,4 @@
-from simulator import create_normal_state
+from .simulator import create_normal_state
 
 
 def simulate_temperature_fault():

@@ -1,9 +1,40 @@
-def correlate_threat(state, ml_result):
-    """
-    Combines ML output with spacecraft/cyber indicators.
+import json
+from pathlib import Path
 
-    ML anomaly alone does NOT mean cyber attack.
-    """
+
+CONFIG_PATH = Path(__file__).with_name(
+    "scenario_config.json"
+)
+
+
+def load_config():
+
+    with open(CONFIG_PATH, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def calculate_threat_level(score, config):
+
+    levels = config["threat_levels"]
+
+    if score >= levels["CRITICAL"]["minimum_score"]:
+        return "CRITICAL"
+
+    if score >= levels["HIGH"]["minimum_score"]:
+        return "HIGH"
+
+    if score >= levels["MEDIUM"]["minimum_score"]:
+        return "MEDIUM"
+
+    return "LOW"
+
+
+def correlate_threat(state, ml_result):
+
+    config = load_config()
+
+    thresholds = config["thresholds"]
+    weights = config["threat_scoring"]
 
     score = 0
     evidence = []
@@ -14,11 +45,12 @@ def correlate_threat(state, ml_result):
 
     if ml_result.get("anomaly", False):
 
-        score += 1
+        score += weights["ml_anomaly"]
 
         evidence.append({
             "indicator": "ML_ANOMALY",
-            "weight": 1
+            "weight": weights["ml_anomaly"],
+            "value": ml_result.get("anomaly_score")
         })
 
     # -------------------------
@@ -27,11 +59,12 @@ def correlate_threat(state, ml_result):
 
     if state.command_type == "UNAUTHORIZED":
 
-        score += 2
+        score += weights["unauthorized_command"]
 
         evidence.append({
             "indicator": "UNAUTHORIZED_COMMAND",
-            "weight": 2
+            "weight": weights["unauthorized_command"],
+            "value": state.command_type
         })
 
     # -------------------------
@@ -40,84 +73,97 @@ def correlate_threat(state, ml_result):
 
     if state.communication_anomaly:
 
-        score += 2
+        score += weights["communication_anomaly"]
 
         evidence.append({
             "indicator": "COMMUNICATION_ANOMALY",
-            "weight": 2
+            "weight": weights["communication_anomaly"],
+            "value": True
         })
 
     # -------------------------
     # Attitude deviation
     # -------------------------
 
-    if abs(state.attitude) > 5:
+    if abs(state.attitude) > thresholds["attitude_deviation"]:
 
-        score += 2
+        score += weights["attitude_deviation"]
 
         evidence.append({
             "indicator": "ATTITUDE_DEVIATION",
-            "weight": 2
+            "weight": weights["attitude_deviation"],
+            "value": state.attitude
         })
 
     # -------------------------
     # Abnormal command rate
     # -------------------------
 
-    if state.command_frequency > 10:
+    if (
+        state.command_frequency
+        > thresholds["command_frequency_high"]
+    ):
 
-        score += 1
+        score += weights["abnormal_command_rate"]
 
         evidence.append({
             "indicator": "ABNORMAL_COMMAND_RATE",
-            "weight": 1
+            "weight": weights["abnormal_command_rate"],
+            "value": state.command_frequency
         })
 
     # -------------------------
     # Threat level
     # -------------------------
 
-    if score >= 6:
-
-        threat_level = "CRITICAL"
-
-    elif score >= 4:
-
-        threat_level = "HIGH"
-
-    elif score >= 2:
-
-        threat_level = "MEDIUM"
-
-    else:
-
-        threat_level = "LOW"
+    threat_level = calculate_threat_level(
+        score,
+        config
+    )
 
     # -------------------------
     # Classification
     # -------------------------
 
-    if (
+    cyber_indicators = (
         state.command_type == "UNAUTHORIZED"
         and state.communication_anomaly
-        and score >= 4
-    ):
+    )
+
+    hardware_indicators = (
+        state.temperature
+        > thresholds["temperature_high"]
+        or abs(state.gyro_x)
+        > thresholds["gyro_deviation"]
+        or state.battery
+        < thresholds["battery_low"]
+    )
+
+    environmental_indicators = (
+        state.solar_power
+        < thresholds["solar_power_low"]
+        or (
+            state.temperature
+            > thresholds["temperature_environmental"]
+            and state.temperature
+            <= thresholds["temperature_high"]
+        )
+        or (
+            abs(state.attitude)
+            > thresholds["attitude_environmental"]
+            and not cyber_indicators
+        )
+    )
+
+    if cyber_indicators and score >= 4:
 
         classification = "CYBER_ANOMALY"
 
-    elif (
-        state.temperature > 70
-        or abs(state.gyro_x) > 2
-        or state.battery < 50
-    ):
+    elif hardware_indicators:
 
         classification = "HARDWARE_FAULT"
 
-    elif (
-        state.solar_power < 40
-        or state.temperature > 40
-        or abs(state.attitude) > 3
-    ):
+    elif environmental_indicators:
 
         classification = "ENVIRONMENTAL_DISTURBANCE"
 
@@ -139,7 +185,7 @@ def correlate_threat(state, ml_result):
 
 if __name__ == "__main__":
 
-    from simulator import create_normal_state
+    from .simulator import create_normal_state
 
     state = create_normal_state()
 
@@ -150,6 +196,9 @@ if __name__ == "__main__":
         "confidence": 0.94
     }
 
-    result = correlate_threat(state, ml_result)
+    result = correlate_threat(
+        state,
+        ml_result
+    )
 
     print(result)

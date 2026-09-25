@@ -18,11 +18,6 @@ class ResponseEngine:
             "BLOCK_COMMAND"
         )
 
-        return {
-            "action": "BLOCK_COMMAND",
-            "command_blocked": True
-        }
-
     def isolate_channel(self):
 
         self.channel_isolated = True
@@ -30,11 +25,6 @@ class ResponseEngine:
         self.action_history.append(
             "ISOLATE_CHANNEL"
         )
-
-        return {
-            "action": "ISOLATE_CHANNEL",
-            "channel_isolated": True
-        }
 
     def enter_safe_mode(self):
 
@@ -44,11 +34,6 @@ class ResponseEngine:
             "SAFE_MODE"
         )
 
-        return {
-            "action": "SAFE_MODE",
-            "safe_mode": True
-        }
-
     def start_monitoring(self):
 
         self.monitoring = True
@@ -57,102 +42,52 @@ class ResponseEngine:
             "TRUSTED_MONITORING"
         )
 
-        return {
-            "action": "TRUSTED_MONITORING",
-            "monitoring": True
-        }
-
     def start_recovery(self):
 
         self.recovery = True
-
         self.safe_mode = False
 
         self.action_history.append(
             "RECOVERY"
         )
 
-        return {
-            "action": "RECOVERY",
-            "recovery": True,
-            "safe_mode": False
-        }
-
     def execute_containment(self):
 
-        """
-        Executes the complete containment sequence.
-        """
+        self.block_command()
+        self.isolate_channel()
+        self.enter_safe_mode()
+        self.start_monitoring()
 
-        results = []
-
-        results.append(
-            self.block_command()
-        )
-
-        results.append(
-            self.isolate_channel()
-        )
-
-        results.append(
-            self.enter_safe_mode()
-        )
-
-        results.append(
-            self.start_monitoring()
-        )
-
-        return {
-            "status": "CONTAINED",
-            "actions": results,
-            "command_blocked": self.command_blocked,
-            "channel_isolated": self.channel_isolated,
-            "safe_mode": self.safe_mode,
-            "monitoring": self.monitoring,
-            "recovery": self.recovery
-        }
+        return self.get_status()
 
     def execute_recovery(self):
 
-        result = self.start_recovery()
+        self.start_recovery()
 
-        return {
-            "status": "RECOVERING",
-            "command_blocked": self.command_blocked,
-            "channel_isolated": self.channel_isolated,
-            "safe_mode": self.safe_mode,
-            "monitoring": self.monitoring,
-            "recovery": self.recovery,
-            "action": result
-        }
+        return self.get_status()
 
     def get_status(self):
 
         return {
-            "command_blocked": self.command_blocked,
-            "channel_isolated": self.channel_isolated,
-            "safe_mode": self.safe_mode,
-            "monitoring": self.monitoring,
-            "recovery": self.recovery
+            "command_blocked":
+                self.command_blocked,
+
+            "channel_isolated":
+                self.channel_isolated,
+
+            "safe_mode":
+                self.safe_mode,
+
+            "monitoring":
+                self.monitoring,
+
+            "recovery":
+                self.recovery,
+
+            "actions":
+                list(self.action_history)
         }
 
     def get_action_history(self):
 
-        return self.action_history
-
-
-if __name__ == "__main__":
-
-    engine = ResponseEngine()
-
-    print("=== CONTAINMENT ===")
-
-    result = engine.execute_containment()
-
-    print(result)
-
-    print("\n=== RECOVERY ===")
-
-    recovery = engine.execute_recovery()
-
-    print(recovery)
+        return list(self.action_history)

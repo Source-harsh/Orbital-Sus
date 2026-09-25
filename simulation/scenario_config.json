@@ -25,6 +25,7 @@
         "battery_low": 50,
         "solar_power_low": 40,
         "attitude_deviation": 5,
+        "attitude_environmental": 3,
         "command_frequency_high": 10,
         "gyro_deviation": 2
     },

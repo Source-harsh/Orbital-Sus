@@ -1,24 +1,17 @@
-from simulator import create_normal_state
+from .simulator import create_normal_state
 
 
 def run_normal():
-    """
-    Healthy spacecraft.
-    """
+    """Healthy spacecraft operating normally."""
 
-    state = create_normal_state()
-
-    return state
+    return create_normal_state()
 
 
 def run_hardware_fault():
     """
-    Simulates a physical hardware failure.
+    Simulates a physical hardware malfunction.
 
-    Important:
-    There is no unauthorized command and no communication anomaly.
-    This allows the correlation engine to distinguish
-    hardware problems from cyber attacks.
+    There are no cyber indicators.
     """
 
     state = create_normal_state()
@@ -36,9 +29,6 @@ def run_hardware_fault():
 def run_environmental_disturbance():
     """
     Simulates an environmental disturbance.
-
-    Example:
-    Reduced solar power and attitude disturbance.
     """
 
     state = create_normal_state()
@@ -54,11 +44,11 @@ def run_environmental_disturbance():
 
 def run_cyber_attack():
     """
-    Simulates a cyber-induced spacecraft anomaly.
+    Main deterministic cyber attack scenario.
 
-    Multiple indicators are intentionally correlated:
+    Multiple indicators are correlated:
     - unauthorized command
-    - high command frequency
+    - abnormal command frequency
     - communication anomaly
     - attitude deviation
     - high CPU usage
