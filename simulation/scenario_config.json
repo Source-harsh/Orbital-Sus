@@ -1,0 +1,57 @@
+{
+    "satellite_id": "SAT-01",
+
+    "scenarios": {
+        "NORMAL": {
+            "description": "Healthy spacecraft operating under normal conditions"
+        },
+
+        "HARDWARE_FAULT": {
+            "description": "Physical spacecraft hardware malfunction"
+        },
+
+        "ENVIRONMENTAL_DISTURBANCE": {
+            "description": "External environmental disturbance affecting spacecraft telemetry"
+        },
+
+        "CYBER_ATTACK": {
+            "description": "Simulated cyber-induced spacecraft anomaly"
+        }
+    },
+
+    "thresholds": {
+        "temperature_high": 70,
+        "temperature_environmental": 40,
+        "battery_low": 50,
+        "solar_power_low": 40,
+        "attitude_deviation": 5,
+        "command_frequency_high": 10,
+        "gyro_deviation": 2
+    },
+
+    "threat_scoring": {
+        "ml_anomaly": 1,
+        "unauthorized_command": 2,
+        "communication_anomaly": 2,
+        "attitude_deviation": 2,
+        "abnormal_command_rate": 1
+    },
+
+    "threat_levels": {
+        "LOW": {
+            "minimum_score": 0
+        },
+
+        "MEDIUM": {
+            "minimum_score": 2
+        },
+
+        "HIGH": {
+            "minimum_score": 4
+        },
+
+        "CRITICAL": {
+            "minimum_score": 6
+        }
+    }
+}
