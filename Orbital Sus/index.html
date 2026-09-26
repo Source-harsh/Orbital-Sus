@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Sus — Spacecraft Cyber Defense Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar {
+            background-color: #151c2c;
+            border-bottom: 1px solid #2d3748;
+        }
+        .card {
+            background-color: #151c2c;
+            border: 1px solid #2d3748;
+            color: #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #1a2336;
+            border-bottom: 1px solid #2d3748;
+            font-weight: 600;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .status-badge {
+            font-size: 1rem;
+            padding: 0.5em 0.8em;
+            border-radius: 6px;
+        }
+        .bg-low { background-color: #10b981; color: #fff; }
+        .bg-medium { background-color: #f59e0b; color: #fff; }
+        .bg-high { background-color: #ef4444; color: #fff; }
+        .bg-critical { background-color: #8b5cf6; color: #fff; }
+        
+        .state-alert { color: #3b82f6; }
+        .state-block { color: #ef4444; font-weight: bold; }
+        .state-isolate { color: #dc2626; font-weight: bold; }
+        .state-safemode { color: #8b5cf6; font-weight: bold; }
+
+        .log-table {
+            font-size: 0.88rem;
+        }
+        .log-table th {
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark px-4">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+            <span class="fs-4 me-2">🛸</span>
+            <span class="fw-bold text-primary">ORBITAL SUS</span>
+            <span class="ms-2 text-muted fs-6">| Cyber-Physical Defense Command</span>
+        </a>
+        <div class="ms-auto d-flex align-items-center">
+            <span class="me-3 text-muted">Satellite: <strong class="text-white" id="sat-id">SAT-01</strong></span>
+            <span class="badge bg-success" id="connection-status">CONNECTED</span>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4 px-4">
+        <!-- Active Containment Banner -->
+        <div class="card border-warning mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center py-3">
+                <div>
+                    <h5 class="mb-1">Active Defense State: <span id="active-containment" class="state-alert fw-bold">ALERT</span></h5>
+                    <p class="mb-0 text-muted" id="containment-details">System operating within nominal parameters.</p>
+                </div>
+                <div>
+                    <span class="me-2">Threat Level:</span>
+                    <span id="threat-level-badge" class="badge status-badge bg-low">LOW</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Telemetry Gauges -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Real-Time Spacecraft Telemetry</span>
+                        <small class="text-muted" id="last-timestamp">--:--:--</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center g-3">
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">Temperature</div>
+                                    <div class="metric-value text-info" id="metric-temp">24.5 °C</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">Battery Level</div>
+                                    <div class="metric-value text-success" id="metric-battery">90.0 %</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">Solar Array Power</div>
+                                    <div class="metric-value text-warning" id="metric-solar">75.0 W</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">CPU Usage</div>
+                                    <div class="metric-value text-primary" id="metric-cpu">30.0 %</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">Attitude Error</div>
+                                    <div class="metric-value text-white" id="metric-attitude">0.02°</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-6">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">Command Frequency</div>
+                                    <div class="metric-value text-white" id="metric-cmd-freq">1 /s</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 col-12">
+                                <div class="p-3 bg-dark rounded border border-secondary">
+                                    <div class="text-muted small">Command Authorization</div>
+                                    <div class="metric-value text-success" id="metric-cmd-type">AUTHORIZED</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threat Injector Controls -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">Threat Injector Control Panel</div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Trigger simulated attack vectors to test automated containment policy engine:</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-danger" onclick="injectThreat('CYBER_ATTACK')">
+                                ⚠️ Inject Cyber Attack (Command Spoofing)
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="injectThreat('HARDWARE_FAULT')">
+                                🔧 Inject Hardware Fault (Thermal & Battery)
+                            </button>
+                            <button class="btn btn-outline-info" onclick="injectThreat('ENVIRONMENTAL_DISTURBANCE')">
+                                ☀️ Inject Solar Flare Disturbance
+                            </button>
+                            <button class="btn btn-success mt-2" onclick="injectThreat('NORMAL')">
+                                ✅ Restore Nominal Operations
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incident Audit Log -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Incident Audit & Threat Log</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="fetchAlerts()">Refresh Log</button>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover mb-0 log-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Satellite</th>
+                                        <th>Scenario</th>
+                                        <th>Classification</th>
+                                        <th>Threat Level</th>
+                                        <th>Containment Response</th>
+                                        <th>Anomaly Score</th>
+                                        <th>Audit Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-log-body">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-3">Listening for incoming spacecraft telemetry...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BACKEND_HOST = "127.0.0.1:8000";
+        let ws;
+
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${BACKEND_HOST}/ws/telemetry`);
+
+            ws.onopen = () => {
+                document.getElementById('connection-status').className = "badge bg-success";
+                document.getElementById('connection-status').innerText = "CONNECTED";
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === "TELEMETRY_UPDATE") {
+                    updateDashboard(data.telemetry, data.assessment);
+                }
+            };
+
+            ws.onclose = () => {
+                document.getElementById('connection-status').className = "badge bg-danger";
+                document.getElementById('connection-status').innerText = "DISCONNECTED";
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function updateDashboard(telemetry, assessment) {
+            document.getElementById('last-timestamp').innerText = telemetry.timestamp.split('T')[1].replace('Z','');
+            document.getElementById('metric-temp').innerText = `${telemetry.temperature} °C`;
+            document.getElementById('metric-battery').innerText = `${telemetry.battery} %`;
+            document.getElementById('metric-solar').innerText = `${telemetry.solar_power} W`;
+            document.getElementById('metric-cpu').innerText = `${telemetry.cpu_usage} %`;
+            document.getElementById('metric-attitude').innerText = `${telemetry.attitude}°`;
+            document.getElementById('metric-cmd-freq').innerText = `${telemetry.command_frequency} /s`;
+            
+            const cmdElem = document.getElementById('metric-cmd-type');
+            cmdElem.innerText = telemetry.command_type;
+            cmdElem.className = telemetry.command_type === "AUTHORIZED" ? "metric-value text-success" : "metric-value text-danger";
+
+            // Containment Banner
+            const stateElem = document.getElementById('active-containment');
+            stateElem.innerText = assessment.recommended_response;
+            stateElem.className = `fw-bold state-${assessment.recommended_response.toLowerCase()}`;
+            document.getElementById('containment-details').innerText = assessment.details;
+
+            const threatBadge = document.getElementById('threat-level-badge');
+            threatBadge.innerText = assessment.threat_level;
+            threatBadge.className = `badge status-badge bg-${assessment.threat_level.toLowerCase()}`;
+
+            // Add row to audit log if threat is elevated
+            if (assessment.threat_level !== "LOW") {
+                addAuditRow(assessment);
+            }
+        }
+
+        function addAuditRow(assessment) {
+            const tbody = document.getElementById('audit-log-body');
+            if (tbody.children.length === 1 && tbody.children[0].children.length === 1) {
+                tbody.innerHTML = '';
+            }
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${assessment.timestamp.split('T')[1].replace('Z','')}</td>
+                <td>${assessment.satellite_id}</td>
+                <td><span class="badge bg-secondary">${assessment.scenario}</span></td>
+                <td><span class="badge bg-info text-dark">${assessment.classification}</span></td>
+                <td><span class="badge bg-${assessment.threat_level.toLowerCase()}">${assessment.threat_level}</span></td>
+                <td><strong class="text-warning">${assessment.recommended_response}</strong></td>
+                <td>${(assessment.anomaly_score * 100).toFixed(0)}%</td>
+                <td class="text-muted">${assessment.details}</td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+
+            if (tbody.children.length > 20) {
+                tbody.removeChild(tbody.lastChild);
+            }
+        }
+
+        async function injectThreat(scenario) {
+            try {
+                await fetch(`http://${BACKEND_HOST}/api/telemetry`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        satellite_id: "SAT-01",
+                        temperature: scenario === "HARDWARE_FAULT" ? 85.0 : 25.0,
+                        battery: scenario === "HARDWARE_FAULT" ? 12.0 : 85.0,
+                        solar_power: scenario === "ENVIRONMENTAL_DISTURBANCE" ? 22.0 : 75.0,
+                        gyro_x: scenario === "CYBER_ATTACK" ? 0.35 : 0.01,
+                        gyro_y: 0.01,
+                        gyro_z: 0.01,
+                        attitude: scenario === "CYBER_ATTACK" ? 5.2 : 0.02,
+                        cpu_usage: scenario === "CYBER_ATTACK" ? 98.0 : 30.0,
+                        command_type: scenario === "CYBER_ATTACK" ? "UNAUTHORIZED" : "AUTHORIZED",
+                        command_frequency: scenario === "CYBER_ATTACK" ? 18 : 1,
+                        communication_anomaly: scenario === "CYBER_ATTACK"
+                    })
+                });
+            } catch (e) {
+                alert("Backend server not connected.");
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const res = await fetch(`http://${BACKEND_HOST}/api/alerts`);
+                const alerts = await res.json();
+                const tbody = document.getElementById('audit-log-body');
+                tbody.innerHTML = '';
+                alerts.reverse().forEach(addAuditRow);
+            } catch (e) {}
+        }
+
+        connectWebSocket();
+    </script>
+</body>
+</html>
