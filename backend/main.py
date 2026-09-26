@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import asyncio
 from datetime import datetime
@@ -8,15 +9,26 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+# Add ML directory to path so predictor can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "ml")))
+
 from schemas import (
     TelemetryData,
     AssessmentResult,
     SystemState,
     ResponseState,
     ThreatLevel,
-    ClassificationName
+    ClassificationName,
+    ScenarioName
 )
 from containment import ContainmentEngine
+
+try:
+    from predictor import TelemetryPredictor
+    ml_predictor = TelemetryPredictor()
+except Exception as e:
+    print(f"[ML Warning] Could not import ML Predictor: {e}")
+    ml_predictor = None
 
 app = FastAPI(
     title="Spacecraft Cyber-Physical Defence Backend API",
@@ -84,9 +96,25 @@ def get_dashboard():
 @app.post("/api/telemetry", response_model=AssessmentResult)
 async def process_telemetry(telemetry: TelemetryData):
     """
-    Ingest spacecraft telemetry, run anomaly classification, and evaluate containment rules.
+    Ingest custom user telemetry input or simulation data, call model.predict() for classification,
+    and trigger containment policy engine.
     """
+    # 1. Call ML Model Predictor on every call if available
+    predicted_classification = None
+    model_score = None
+    if ml_predictor:
+        predicted_class_str, model_score = ml_predictor.predict(telemetry.model_dump())
+        if predicted_class_str in [c.value for c in ClassificationName]:
+            predicted_classification = ClassificationName(predicted_class_str)
+
+    # 2. Evaluate containment rules
     assessment = engine.evaluate_telemetry(telemetry)
+
+    # If ML prediction was generated, merge model output into assessment
+    if predicted_classification:
+        assessment.classification = predicted_classification
+        if model_score is not None:
+            assessment.anomaly_score = max(assessment.anomaly_score, model_score)
 
     # Store latest system state
     state = SystemState(
@@ -136,6 +164,6 @@ async def websocket_telemetry_stream(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            await websocket.receive_text()  # Keep connection alive
+            await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)

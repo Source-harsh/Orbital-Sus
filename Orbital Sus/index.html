@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbital Sus — Spacecraft Cyber Defense Dashboard</title>
+    <title>Orbital Sus — Spacecraft Cyber Defense & Manual Telemetry Console</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -27,7 +27,7 @@
             font-weight: 600;
         }
         .metric-value {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 700;
         }
         .status-badge {
@@ -48,8 +48,15 @@
         .log-table {
             font-size: 0.88rem;
         }
-        .log-table th {
-            color: #94a3b8;
+        .terminal-box {
+            background-color: #050811;
+            color: #10b981;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            border-radius: 8px;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid #10b981;
         }
     </style>
 </head>
@@ -59,7 +66,7 @@
         <a class="navbar-brand d-flex align-items-center" href="#">
             <span class="fs-4 me-2">🛸</span>
             <span class="fw-bold text-primary">ORBITAL SUS</span>
-            <span class="ms-2 text-muted fs-6">| Cyber-Physical Defense Command</span>
+            <span class="ms-2 text-muted fs-6">| Cyber-Physical Defense Command & Input Form</span>
         </a>
         <div class="ms-auto d-flex align-items-center">
             <span class="me-3 text-muted">Satellite: <strong class="text-white" id="sat-id">SAT-01</strong></span>
@@ -84,10 +91,10 @@
 
         <div class="row">
             <!-- Telemetry Gauges -->
-            <div class="col-lg-8">
+            <div class="col-lg-7">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Real-Time Spacecraft Telemetry</span>
+                        <span>Real-Time Spacecraft Telemetry Gauges</span>
                         <small class="text-muted" id="last-timestamp">--:--:--</small>
                     </div>
                     <div class="card-body">
@@ -106,7 +113,7 @@
                             </div>
                             <div class="col-md-3 col-6">
                                 <div class="p-3 bg-dark rounded border border-secondary">
-                                    <div class="text-muted small">Solar Array Power</div>
+                                    <div class="text-muted small">Solar Power</div>
                                     <div class="metric-value text-warning" id="metric-solar">75.0 W</div>
                                 </div>
                             </div>
@@ -137,27 +144,107 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Prompt Injection Security Terminal -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>⌨️ Prompt Injection & Command Security Terminal</span>
+                        <small class="text-success">SECURITY INTERACTION CONSOLE</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="terminal-box mb-3" id="terminal-output">
+                            <div>[SYSTEM INITIALIZED] Defense Security Console Active.</div>
+                            <div>Ready to receive command inputs and prompt injections...</div>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="terminal-input" class="form-control bg-dark text-white border-secondary" placeholder="Type prompt injection command (e.g. OVERRIDE_AUTH --payload=MALICIOUS_DISASTER)...">
+                            <button class="btn btn-primary" onclick="sendPromptInjection()">Send Command</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <!-- Threat Injector Controls -->
-            <div class="col-lg-4">
+            <!-- Manual Custom Telemetry Input Form (All Fields) -->
+            <div class="col-lg-5">
                 <div class="card">
-                    <div class="card-header">Threat Injector Control Panel</div>
+                    <div class="card-header bg-primary text-white">
+                        <span>📝 Custom Telemetry Input Form (User Tuning)</span>
+                    </div>
                     <div class="card-body">
-                        <p class="text-muted small mb-3">Trigger simulated attack vectors to test automated containment policy engine:</p>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-danger" onclick="injectThreat('CYBER_ATTACK')">
-                                ⚠️ Inject Cyber Attack (Command Spoofing)
-                            </button>
-                            <button class="btn btn-outline-warning" onclick="injectThreat('HARDWARE_FAULT')">
-                                🔧 Inject Hardware Fault (Thermal & Battery)
-                            </button>
-                            <button class="btn btn-outline-info" onclick="injectThreat('ENVIRONMENTAL_DISTURBANCE')">
-                                ☀️ Inject Solar Flare Disturbance
-                            </button>
-                            <button class="btn btn-success mt-2" onclick="injectThreat('NORMAL')">
-                                ✅ Restore Nominal Operations
-                            </button>
+                        <form id="telemetry-form" onsubmit="submitCustomTelemetry(event)">
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Satellite ID</label>
+                                    <input type="text" id="inp-sat-id" class="form-control form-control-sm bg-dark text-white" value="SAT-01">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Temperature (°C)</label>
+                                    <input type="number" step="0.1" id="inp-temp" class="form-control form-control-sm bg-dark text-white" value="25.0">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Battery (%)</label>
+                                    <input type="number" step="0.1" id="inp-battery" class="form-control form-control-sm bg-dark text-white" value="85.0">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Solar Power (W)</label>
+                                    <input type="number" step="0.1" id="inp-solar" class="form-control form-control-sm bg-dark text-white" value="75.0">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small mb-1">Gyro X</label>
+                                    <input type="number" step="0.01" id="inp-gyro-x" class="form-control form-control-sm bg-dark text-white" value="0.01">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small mb-1">Gyro Y</label>
+                                    <input type="number" step="0.01" id="inp-gyro-y" class="form-control form-control-sm bg-dark text-white" value="0.01">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label small mb-1">Gyro Z</label>
+                                    <input type="number" step="0.01" id="inp-gyro-z" class="form-control form-control-sm bg-dark text-white" value="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Attitude Error (°)</label>
+                                    <input type="number" step="0.01" id="inp-attitude" class="form-control form-control-sm bg-dark text-white" value="0.02">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">CPU Usage (%)</label>
+                                    <input type="number" step="0.1" id="inp-cpu" class="form-control form-control-sm bg-dark text-white" value="30.0">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Command Type</label>
+                                    <select id="inp-cmd-type" class="form-select form-select-sm bg-dark text-white">
+                                        <option value="AUTHORIZED" selected>AUTHORIZED</option>
+                                        <option value="UNAUTHORIZED">UNAUTHORIZED</option>
+                                        <option value="SPOOFED">SPOOFED</option>
+                                        <option value="MALFORMED">MALFORMED</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small mb-1">Command Frequency (/s)</label>
+                                    <input type="number" id="inp-cmd-freq" class="form-control form-control-sm bg-dark text-white" value="1">
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="inp-comms-anomaly">
+                                        <label class="form-check-label text-warning small">
+                                            Enable Communication Signal Anomaly Flag
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-grid mt-3">
+                                <button type="submit" class="btn btn-primary fw-bold">
+                                    🚀 Send User Input & Run Model Prediction
+                                </button>
+                            </div>
+                        </form>
+
+                        <hr class="border-secondary my-3">
+
+                        <!-- Quick Presets -->
+                        <div class="d-grid gap-1">
+                            <button class="btn btn-sm btn-outline-danger" onclick="injectThreat('CYBER_ATTACK')">⚡ Quick Cyber Attack Preset</button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="injectThreat('HARDWARE_FAULT')">🔧 Quick Hardware Fault Preset</button>
+                            <button class="btn btn-sm btn-outline-success" onclick="injectThreat('NORMAL')">✅ Quick Restore Nominal Preset</button>
                         </div>
                     </div>
                 </div>
@@ -249,7 +336,6 @@
             threatBadge.innerText = assessment.threat_level;
             threatBadge.className = `badge status-badge bg-${assessment.threat_level.toLowerCase()}`;
 
-            // Add row to audit log if threat is elevated
             if (assessment.threat_level !== "LOW") {
                 addAuditRow(assessment);
             }
@@ -279,29 +365,96 @@
             }
         }
 
-        async function injectThreat(scenario) {
+        async function submitCustomTelemetry(event) {
+            event.preventDefault();
+            const payload = {
+                satellite_id: document.getElementById('inp-sat-id').value,
+                temperature: parseFloat(document.getElementById('inp-temp').value),
+                battery: parseFloat(document.getElementById('inp-battery').value),
+                solar_power: parseFloat(document.getElementById('inp-solar').value),
+                gyro_x: parseFloat(document.getElementById('inp-gyro-x').value),
+                gyro_y: parseFloat(document.getElementById('inp-gyro-y').value),
+                gyro_z: parseFloat(document.getElementById('inp-gyro-z').value),
+                attitude: parseFloat(document.getElementById('inp-attitude').value),
+                cpu_usage: parseFloat(document.getElementById('inp-cpu').value),
+                command_type: document.getElementById('inp-cmd-type').value,
+                command_frequency: parseInt(document.getElementById('inp-cmd-freq').value),
+                communication_anomaly: document.getElementById('inp-comms-anomaly').checked
+            };
+
+            await sendTelemetryPayload(payload);
+            logTerminal(`[USER FORM INPUT]: Sent custom payload for ${payload.satellite_id} | Cmd: ${payload.command_type}`);
+        }
+
+        async function sendPromptInjection() {
+            const inputElem = document.getElementById('terminal-input');
+            const cmd = inputElem.value.trim();
+            if (!cmd) return;
+
+            logTerminal(`> ${cmd}`);
+            inputElem.value = '';
+
+            // Simulate Cyber Attack Payload from prompt injection command
+            const payload = {
+                satellite_id: "SAT-01",
+                temperature: 42.0,
+                battery: 65.0,
+                solar_power: 70.0,
+                gyro_x: 0.45,
+                gyro_y: 0.25,
+                gyro_z: 0.15,
+                attitude: 4.8,
+                cpu_usage: 96.5,
+                command_type: "UNAUTHORIZED",
+                command_frequency: 18,
+                communication_anomaly: true
+            };
+
+            const assessment = await sendTelemetryPayload(payload);
+            if (assessment) {
+                logTerminal(`[CONTAINMENT EXECUTION]: Classification=${assessment.classification} | Action=${assessment.recommended_response} | Score=${(assessment.anomaly_score*100).toFixed(0)}%`);
+            }
+        }
+
+        async function sendTelemetryPayload(payload) {
             try {
-                await fetch(`http://${BACKEND_HOST}/api/telemetry`, {
+                const res = await fetch(`http://${BACKEND_HOST}/api/telemetry`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        satellite_id: "SAT-01",
-                        temperature: scenario === "HARDWARE_FAULT" ? 85.0 : 25.0,
-                        battery: scenario === "HARDWARE_FAULT" ? 12.0 : 85.0,
-                        solar_power: scenario === "ENVIRONMENTAL_DISTURBANCE" ? 22.0 : 75.0,
-                        gyro_x: scenario === "CYBER_ATTACK" ? 0.35 : 0.01,
-                        gyro_y: 0.01,
-                        gyro_z: 0.01,
-                        attitude: scenario === "CYBER_ATTACK" ? 5.2 : 0.02,
-                        cpu_usage: scenario === "CYBER_ATTACK" ? 98.0 : 30.0,
-                        command_type: scenario === "CYBER_ATTACK" ? "UNAUTHORIZED" : "AUTHORIZED",
-                        command_frequency: scenario === "CYBER_ATTACK" ? 18 : 1,
-                        communication_anomaly: scenario === "CYBER_ATTACK"
-                    })
+                    body: JSON.stringify(payload)
                 });
+                return await res.json();
             } catch (e) {
-                alert("Backend server not connected.");
+                logTerminal(`[ERROR]: Failed to connect to backend server.`);
+                return null;
             }
+        }
+
+        function logTerminal(msg) {
+            const box = document.getElementById('terminal-output');
+            const div = document.createElement('div');
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function injectThreat(scenario) {
+            const base = {
+                satellite_id: "SAT-01",
+                temperature: scenario === "HARDWARE_FAULT" ? 85.0 : 25.0,
+                battery: scenario === "HARDWARE_FAULT" ? 12.0 : 85.0,
+                solar_power: scenario === "ENVIRONMENTAL_DISTURBANCE" ? 22.0 : 75.0,
+                gyro_x: scenario === "CYBER_ATTACK" ? 0.35 : 0.01,
+                gyro_y: 0.01,
+                gyro_z: 0.01,
+                attitude: scenario === "CYBER_ATTACK" ? 5.2 : 0.02,
+                cpu_usage: scenario === "CYBER_ATTACK" ? 98.0 : 30.0,
+                command_type: scenario === "CYBER_ATTACK" ? "UNAUTHORIZED" : "AUTHORIZED",
+                command_frequency: scenario === "CYBER_ATTACK" ? 18 : 1,
+                communication_anomaly: scenario === "CYBER_ATTACK"
+            };
+            await sendTelemetryPayload(base);
+            logTerminal(`[PRESET INJECTED]: ${scenario}`);
         }
 
         async function fetchAlerts() {
